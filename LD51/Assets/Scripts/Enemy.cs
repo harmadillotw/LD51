@@ -26,7 +26,7 @@ public class Enemy
         this.attackType = attackType;
         this.attackDamage = attackDamage;
         this.attackRange = attackRange;
-        attackFrequency = 1f;
+        setAttackFrequency();
     }
 
     public Enemy(int health, int attackType, int attackDamage, int attackRange, bool staticEnemy = false)
@@ -35,8 +35,24 @@ public class Enemy
         this.attackType = attackType;
         this.attackDamage = attackDamage;
         this.attackRange = attackRange;
-        attackFrequency = 1f;
+        setAttackFrequency();
         this.bossEnemy = staticEnemy;
+    }
+
+    private void setAttackFrequency()
+    {
+        switch(attackType)
+        {
+            case Constants.ATTACK_TYPE_MELEE:
+                attackFrequency = Random.Range(1f, 1.5f);
+                break;
+            case Constants.ATTACK_TYPE_PROJECTILE:
+                attackFrequency = Random.Range(1.5f, 2f);
+                break;
+            case Constants.ATTACK_TYPE_MAGIC:
+                attackFrequency = Random.Range(2f, 2.5f);
+                break;
+        }
     }
 
 }

@@ -8,7 +8,7 @@ public class Room
     public List<Enemy> enemies;
     public List<Door> doors;
     public bool bossRoom = false;
-
+    public IntPair location;
 
     public Room(int roomId)
     {

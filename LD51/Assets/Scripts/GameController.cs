@@ -16,6 +16,8 @@ public class GameController : MonoBehaviour
     Text countdownText;
     Text TransitionText;
     float timer = 0.0f;
+
+    private bool paused = false;
     // Start is called before the first frame update
 
     public event EventHandler darkEvent;
@@ -24,10 +26,14 @@ public class GameController : MonoBehaviour
 
     public event EventHandler spawnEnemiesEvent;
 
+    public event EventHandler pauseEvent;
+    public event EventHandler unpauseEvent;
+
     private MusicController mc;
 
     void Start()
     {
+        paused = false;
         mc = GameObject.FindObjectOfType<MusicController>();
 
         countdownText = coundownGO.GetComponent<Text>();
@@ -48,7 +54,11 @@ public class GameController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!Singleton.Instance.isPaused())
+        if (Input.GetKeyDown(KeyCode.Tab))
+        {
+            togglePasue();
+        }
+        if (!paused)
         {
             timer += Time.deltaTime;
             if (timer > 10f)
@@ -64,6 +74,22 @@ public class GameController : MonoBehaviour
             countdownText.text = "" + (displayTimer);
         }
 
+    }
+
+    private void togglePasue()
+    {
+        if (paused)
+        {
+            paused = false;
+            Singleton.Instance.paused = false;
+            unpauseEvent?.Invoke(this, EventArgs.Empty);
+        }
+        else
+        {
+            paused = true;
+            Singleton.Instance.paused = true;
+            pauseEvent?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     private void newModifier()

@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class EnemyController : MonoBehaviour
 {
@@ -22,12 +24,26 @@ public class EnemyController : MonoBehaviour
     public List<GameObject> DropPrefabs;
 
     public AudioSource playerAudioSource;
+
+    
     public AudioClip rangeClip;
     public AudioClip meleeClip;
     public AudioClip magicClip;
     public AudioClip damageClip;
 
-    private float rangeAttackSpeed = 5f;
+    // Pause values
+    private GameController gameController;
+    private Vector2 savedVelocity;
+    private float savedAngularVelocity;
+
+    //debug
+    public TextMeshProUGUI debugText;
+    private UIController uiController;
+    public Canvas debugCanvas;
+
+
+
+    private float rangeAttackSpeed = 3.5f;
 
     private Enemy enemy;
     private Rigidbody2D body;
@@ -39,14 +55,35 @@ public class EnemyController : MonoBehaviour
     private float attackTimer;
 
     private float bossTimer;
-   
+
+    private bool paused = false;
+
+    private bool debugEnabled = false; 
+
+    private bool isBeingDestroyed;
 
 
+
+    private void Awake()
+    {
+        paused = false;
+        gameController = GameObject.FindObjectOfType<GameController>();
+        gameController.pauseEvent += processPauseEvent;
+        gameController.unpauseEvent += processUnpauseEvent;
+
+        uiController = GameObject.FindObjectOfType<UIController>();
+        uiController.enableDebugModeEvent += processenableDebugModeEvent;
+        uiController.disableDebugModeEvent += processdisableDebugModeEvent;
+        debugCanvas = GetComponentInChildren<Canvas>();
+
+    }
     // Start is called before the first frame update
     void Start()
     {
         body = GetComponent<Rigidbody2D>();
         player = GameObject.Find("Player");
+        debugText = GetComponentInChildren<TextMeshProUGUI>();
+        debugCanvas.gameObject.SetActive(Singleton.Instance.debugMode);
         attackTimer = 0;
         bossTimer = 0f;
         if (enemy.attackType == Constants.ATTACK_TYPE_MELEE)
@@ -71,13 +108,16 @@ public class EnemyController : MonoBehaviour
         {
             Singleton.Instance.bossHealth = enemy.health;
         }
+        debugText.transform.parent.transform.LookAt(Camera.main.transform);
+        debugText.text = "H:" + enemy.health + " D:" + enemy.attackDamage;
 
     }
+ 
 
     // Update is called once per frame
     void Update()
     {
-        if (!Singleton.Instance.isPaused())
+        if ((!Singleton.Instance.isPaused()) && !paused)
         {
 
             if (enemy.bossEnemy)
@@ -120,35 +160,75 @@ public class EnemyController : MonoBehaviour
                 attackTimer = 0;
             }
             checkHealth();
+            debugText.text = "H:" + enemy.health + " D:" + enemy.attackDamage;
+            debugText.transform.parent.transform.LookAt(Camera.main.transform);
         }
     }
 
     private void FixedUpdate()
     {
-        if (!Singleton.Instance.isPaused())
+        if (!paused)
         {
-            if (enemy.bossEnemy)
+            if (!Singleton.Instance.isPaused())
             {
-                Vector2 movement = new Vector2(direction.x * speed, direction.y * bossSpeed);
-                body.velocity = movement;
+                if (enemy.bossEnemy)
+                {
+                    Vector2 movement = new Vector2(direction.x * speed, direction.y * bossSpeed);
+                    body.velocity = movement;
+                }
+                else
+                {
+                    Vector2 movement = new Vector2(direction.x * speed, direction.y * speed);
+                    body.velocity = movement;
+                }
+
+                transform.up = direction;
             }
             else
             {
-                Vector2 movement = new Vector2(direction.x * speed, direction.y * speed);
+                Vector2 movement = new Vector2(0, 0);
                 body.velocity = movement;
+                body.angularVelocity = 0f;
             }
-
-            transform.up = direction;
-        }
-        else
-        {
-            Vector2 movement = new Vector2(0, 0);
-            body.velocity = movement;
-            body.angularVelocity = 0f;
         }
         
     }
+    private void processPauseEvent(object sender, System.EventArgs e)
+    {
+        paused = true;
 
+        savedVelocity = body.velocity;
+        savedAngularVelocity = body.angularVelocity;
+        Vector2 movement = new Vector2(0, 0);
+        body.velocity = movement;
+        body.angularVelocity = 0f;
+
+    }
+
+    private void processUnpauseEvent(object sender, System.EventArgs e)
+    {
+        paused = false;
+        body.velocity = savedVelocity;
+        body.angularVelocity = savedAngularVelocity;
+    }
+
+    private void processenableDebugModeEvent(object sender, System.EventArgs e)
+    {
+        debugEnabled = Singleton.Instance.debugMode;
+        if (debugCanvas != null)
+        {
+            debugCanvas.gameObject.SetActive(debugEnabled);
+        }
+    }
+
+    private void processdisableDebugModeEvent(object sender, System.EventArgs e)
+    {
+        debugEnabled = Singleton.Instance.debugMode;
+        if (debugCanvas != null)
+        {
+            debugCanvas.gameObject.SetActive(debugEnabled);
+        }
+    }
     private void attack()
     {
         switch (enemy.attackType)
@@ -354,7 +434,21 @@ public class EnemyController : MonoBehaviour
             {
                 Singleton.Instance.roomTransition = true;
             }
-            Destroy(gameObject);
+            DestroyThisEnemy();
+        }
+    }
+
+    private void DestroyThisEnemy()
+    {
+        isBeingDestroyed = true;
+        Destroy(gameObject);
+    }
+
+    public void enableSword()
+    {
+        if (!isBeingDestroyed)
+        {
+            transform.Find("sword2").gameObject.SetActive(true);
         }
     }
     public void setAttackType(int attackType)
@@ -394,5 +488,9 @@ public class EnemyController : MonoBehaviour
         audioSource.PlayOneShot(clip, vol);
     }
 
-
+    private void OnDestroy()
+    {
+        gameController.pauseEvent -= processPauseEvent;
+        gameController.unpauseEvent -= processUnpauseEvent;
+    }
 }

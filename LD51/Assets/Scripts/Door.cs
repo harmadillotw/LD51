@@ -4,9 +4,14 @@ using UnityEngine;
 
 public class Door 
 {
+    // wall 
+    // 0 = N
+    // 1 = E
+    // 2 = S
+    // 3 = W
     public int doorId;
-    public int destinationRoom;
-    public int myRoom;
+    public int destinationRoomId;
+    public int roomId;
     public int wall;
     public bool exit = false;
 
@@ -21,12 +26,20 @@ public class Door
         doorId = Singleton.Instance.maxDoorId++;
         this.wall = wall;
     }
-
-    public Door(int wall, int destination, int myRoom)
+    public Door(int wall,  int room)
     {
         doorId = Singleton.Instance.maxDoorId++;
-        destinationRoom = destination;
-        this.myRoom = myRoom;
+        this.roomId = room;
+        this.wall = wall;
+        exit = false;
+    }
+        
+    public Door(int wall, int roomId, int destinationRoomId)
+    {
+        doorId = Singleton.Instance.maxDoorId++;
+        
+        this.destinationRoomId = destinationRoomId;
+        this.roomId = roomId;
         this.wall = wall;
         exit = false;
 
@@ -35,13 +48,11 @@ public class Door
     public Door(int wall, int destination, int myRoom, bool exit)
     {
         doorId = Singleton.Instance.maxDoorId++;
-        destinationRoom = destination;
-        this.myRoom = myRoom;
+        destinationRoomId = destination;
+        this.roomId = myRoom;
         this.wall = wall;
         this.exit = exit;
 
     }
-
-
 
 }

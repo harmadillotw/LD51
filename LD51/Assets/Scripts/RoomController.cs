@@ -16,6 +16,9 @@ public class RoomController : MonoBehaviour
 
     public GameObject BossEnemyPrefab;
 
+    public GameObject Player;
+    public GameObject Camera;
+
     public int room;
 
     private Text StartCountText;
@@ -31,15 +34,23 @@ public class RoomController : MonoBehaviour
 
     private bool bossRoom = false;
 
+    private List<GameObject> roomDoors = new List<GameObject>();
+    private Vector3 playerStartPosition;
+    private Vector2 playerDirection;
+    private Rigidbody2D playerBody;
+    private CircleCollider2D playerCollider;
+
     //private Dictionary<int,IntPair> starts = new Dictionary<int, IntPair>();
     // Start is called before the first frame update
     private void Awake()
     {
         gameController.GetComponent<GameController>().spawnEnemiesEvent += processSpawnEnemiesEvent;
+        playerBody = Player.GetComponent<Rigidbody2D>();
+        playerCollider = Player.GetComponentInChildren<CircleCollider2D>();
     }
     void Start()
     {
-
+        playerCollider.enabled = false;
         if (Singleton.Instance.newGame )
         {
             Singleton.Instance.startGameOver = false;
@@ -106,196 +117,196 @@ public class RoomController : MonoBehaviour
             Singleton.Instance.starts.Add(21, new IntPair(14, -6));
         }
 
-        if (Singleton.Instance.rooms.ContainsKey(Singleton.Instance.currentRoomId))
-        {
-            // got a room, we can skip creation
-        }
-        //Attempt at boss room
+        //if (Singleton.Instance.rooms.ContainsKey(Singleton.Instance.currentRoomId))
+        //{
+        //    // got a room, we can skip creation
+        //}
+        ////Attempt at boss room
+        ////else if (Singleton.Instance.currentRoomId == 1)
+        ////{
+        ////    Room room1 = new Room(Singleton.Instance.currentRoomId);
+        ////    Door newDoor = new Door(0, Singleton.Instance.currentRoomId + 1, Singleton.Instance.currentRoomId, true);
+        ////    room1.addDoor(newDoor);
+        ////    Enemy newEnemy1 = new Enemy(1, Constants.ATTACK_TYPE_MELEE, 1, 1, true);
+        ////    room1.addEnemy(newEnemy1);
+        ////    room1.bossRoom = true;
+        ////    Singleton.Instance.addRoom(room1);
+        ////}
+        ////Create first room
         //else if (Singleton.Instance.currentRoomId == 1)
         //{
         //    Room room1 = new Room(Singleton.Instance.currentRoomId);
-        //    Door newDoor = new Door(0, Singleton.Instance.currentRoomId + 1, Singleton.Instance.currentRoomId, true);
+
+        //    Door newDoor = new Door(0, Singleton.Instance.currentRoomId + 1, Singleton.Instance.currentRoomId);
         //    room1.addDoor(newDoor);
-        //    Enemy newEnemy1 = new Enemy(1, Constants.ATTACK_TYPE_MELEE, 1, 1, true);
+
+        //    Enemy newEnemy1 = new Enemy(2, Constants.ATTACK_TYPE_MELEE, 1, 1);
         //    room1.addEnemy(newEnemy1);
-        //    room1.bossRoom = true;
+        //    Enemy newEnemy2 = new Enemy(2, Constants.ATTACK_TYPE_MELEE, 1, 1);
+        //    room1.addEnemy(newEnemy2);
+        //    Enemy newEnemy3 = new Enemy(2, Constants.ATTACK_TYPE_MELEE, 1, 1);
+        //    room1.addEnemy(newEnemy3);
+
         //    Singleton.Instance.addRoom(room1);
+
+
         //}
-        //Create first room
-        else if (Singleton.Instance.currentRoomId == 1)
-        {
-            Room room1 = new Room(Singleton.Instance.currentRoomId);
+        //else if (Singleton.Instance.currentRoomId == 2)
+        //{
+        //    //Room previousRoom = null;
 
-            Door newDoor = new Door(0, Singleton.Instance.currentRoomId + 1, Singleton.Instance.currentRoomId);
-            room1.addDoor(newDoor);
+        //    //if (Singleton.Instance.rooms.ContainsKey(Singleton.Instance.fromRoomId))
+        //    //{
+        //    //     previousRoom = (Singleton.Instance.rooms[Singleton.Instance.fromRoomId]);
 
-            Enemy newEnemy1 = new Enemy(2, Constants.ATTACK_TYPE_MELEE, 1, 1);
-            room1.addEnemy(newEnemy1);
-            Enemy newEnemy2 = new Enemy(2, Constants.ATTACK_TYPE_MELEE, 1, 1);
-            room1.addEnemy(newEnemy2);
-            Enemy newEnemy3 = new Enemy(2, Constants.ATTACK_TYPE_MELEE, 1, 1);
-            room1.addEnemy(newEnemy3);
+        //    //}
+        //    Room room1 = new Room(Singleton.Instance.currentRoomId);
 
-            Singleton.Instance.addRoom(room1);
+        //    Door newDoor = new Door(0, Singleton.Instance.currentRoomId +1, Singleton.Instance.currentRoomId);
+        //    room1.addDoor(newDoor);
 
+        //    Door otherDoor = null;
+        //    if (previousRoom != null)
+        //    {
+        //        if (Singleton.Instance.fromDoor != null)
+        //        {
+        //            int doorSide = (Singleton.Instance.fromDoor.wall + 2) % 4;
+        //            otherDoor = new Door(doorSide, Singleton.Instance.fromDoor.roomId, Singleton.Instance.currentRoomId);
+        //        }
+        //    }
+        //    if (otherDoor != null)
+        //    {
+        //        room1.addDoor(otherDoor);
+        //    }
+        //    Enemy newEnemy1 = new Enemy(2, Constants.ATTACK_TYPE_PROJECTILE, 1, 1);
+        //    room1.addEnemy(newEnemy1);
+        //    Enemy newEnemy2 = new Enemy(2, Constants.ATTACK_TYPE_PROJECTILE, 1, 1);
+        //    room1.addEnemy(newEnemy2);
+        //    Enemy newEnemy3 = new Enemy(2, Constants.ATTACK_TYPE_PROJECTILE, 1, 1);
+        //    room1.addEnemy(newEnemy3);
 
-        }
-        else if (Singleton.Instance.currentRoomId == 2)
-        {
-            //Room previousRoom = null;
-
-            //if (Singleton.Instance.rooms.ContainsKey(Singleton.Instance.fromRoomId))
-            //{
-            //     previousRoom = (Singleton.Instance.rooms[Singleton.Instance.fromRoomId]);
-
-            //}
-            Room room1 = new Room(Singleton.Instance.currentRoomId);
-
-            Door newDoor = new Door(0, Singleton.Instance.currentRoomId +1, Singleton.Instance.currentRoomId);
-            room1.addDoor(newDoor);
-
-            Door otherDoor = null;
-            if (previousRoom != null)
-            {
-                if (Singleton.Instance.fromDoor != null)
-                {
-                    int doorSide = (Singleton.Instance.fromDoor.wall + 2) % 4;
-                    otherDoor = new Door(doorSide, Singleton.Instance.fromDoor.myRoom, Singleton.Instance.currentRoomId);
-                }
-            }
-            if (otherDoor != null)
-            {
-                room1.addDoor(otherDoor);
-            }
-            Enemy newEnemy1 = new Enemy(2, Constants.ATTACK_TYPE_PROJECTILE, 1, 1);
-            room1.addEnemy(newEnemy1);
-            Enemy newEnemy2 = new Enemy(2, Constants.ATTACK_TYPE_PROJECTILE, 1, 1);
-            room1.addEnemy(newEnemy2);
-            Enemy newEnemy3 = new Enemy(2, Constants.ATTACK_TYPE_PROJECTILE, 1, 1);
-            room1.addEnemy(newEnemy3);
-
-            Singleton.Instance.addRoom(room1);
-            SavedSettings.currentLevel++;
-            //Singleton.Instance.currentRoomId = room1.RoomId;
-        }
-        else if (Singleton.Instance.currentRoomId == 3)
-        {
-            Room room1 = new Room(Singleton.Instance.currentRoomId);
-
-            Door newDoor = new Door(0, Singleton.Instance.currentRoomId + 1, Singleton.Instance.currentRoomId);
-            room1.addDoor(newDoor);
-
-
-            Door otherDoor = null;
-            if (previousRoom != null)
-            {
-                if (Singleton.Instance.fromDoor != null)
-                {
-                    int doorSide = (Singleton.Instance.fromDoor.wall + 2) % 4;
-                    otherDoor = new Door(doorSide, Singleton.Instance.fromDoor.myRoom, Singleton.Instance.currentRoomId);
-                }
-            }
-            if (otherDoor != null)
-            {
-                room1.addDoor(otherDoor);
-            }
-
-            Enemy newEnemy1 = new Enemy(2, Constants.ATTACK_TYPE_MAGIC, 1, 1);
-            room1.addEnemy(newEnemy1);
-            Enemy newEnemy2 = new Enemy(2, Constants.ATTACK_TYPE_MAGIC, 1, 1);
-            room1.addEnemy(newEnemy2);
-            Enemy newEnemy3 = new Enemy(2, Constants.ATTACK_TYPE_MAGIC, 1, 1);
-            room1.addEnemy(newEnemy3);
-
-            Singleton.Instance.addRoom(room1);
-            
-            //Singleton.Instance.currentRoomId = room1.RoomId;
-        }
-        //else if (Singleton.Instance.currentRoomId == 4)
+        //    Singleton.Instance.addRoom(room1);
+        //    SavedSettings.currentLevel++;
+        //    //Singleton.Instance.currentRoomId = room1.RoomId;
+        //}
+        //else if (Singleton.Instance.currentRoomId == 3)
         //{
         //    Room room1 = new Room(Singleton.Instance.currentRoomId);
-        //    Door newDoor = new Door(0, Singleton.Instance.currentRoomId + 1, Singleton.Instance.currentRoomId, true);
+
+        //    Door newDoor = new Door(0, Singleton.Instance.currentRoomId + 1, Singleton.Instance.currentRoomId);
         //    room1.addDoor(newDoor);
-        //    Enemy newEnemy1 = new Enemy(1, Constants.ATTACK_TYPE_MELEE, 1, 1, true);
+
+
+        //    Door otherDoor = null;
+        //    if (previousRoom != null)
+        //    {
+        //        if (Singleton.Instance.fromDoor != null)
+        //        {
+        //            int doorSide = (Singleton.Instance.fromDoor.wall + 2) % 4;
+        //            otherDoor = new Door(doorSide, Singleton.Instance.fromDoor.roomId, Singleton.Instance.currentRoomId);
+        //        }
+        //    }
+        //    if (otherDoor != null)
+        //    {
+        //        room1.addDoor(otherDoor);
+        //    }
+
+        //    Enemy newEnemy1 = new Enemy(2, Constants.ATTACK_TYPE_MAGIC, 1, 1);
         //    room1.addEnemy(newEnemy1);
-        //    room1.bossRoom = true;
+        //    Enemy newEnemy2 = new Enemy(2, Constants.ATTACK_TYPE_MAGIC, 1, 1);
+        //    room1.addEnemy(newEnemy2);
+        //    Enemy newEnemy3 = new Enemy(2, Constants.ATTACK_TYPE_MAGIC, 1, 1);
+        //    room1.addEnemy(newEnemy3);
+
         //    Singleton.Instance.addRoom(room1);
+            
+        //    //Singleton.Instance.currentRoomId = room1.RoomId;
         //}
-        else 
-        {
-            int isBossRoom = 0;
-            if (Singleton.Instance.currentRoomId > 10)
-            {
-                isBossRoom = Random.Range(0, 2);
-            }
-            if (isBossRoom > 0)
-            {
-                Room room1 = new Room(Singleton.Instance.currentRoomId);
-                Door newDoor = new Door(0, Singleton.Instance.currentRoomId + 1, Singleton.Instance.currentRoomId, true);
-                room1.addDoor(newDoor);
-                Enemy newEnemy1 = new Enemy(100, Constants.ATTACK_TYPE_MELEE, 1, 1, true);
-                room1.addEnemy(newEnemy1);
-                room1.bossRoom = true;
-                Singleton.Instance.addRoom(room1);
-            }
-            else
-            {
-                Room room1 = new Room(Singleton.Instance.currentRoomId);
-                Door otherDoor = null;
-                if (previousRoom != null)
-                {
-                    if (Singleton.Instance.fromDoor != null)
-                    {
-                        int doorSide = (Singleton.Instance.fromDoor.wall + 2) % 4;
-                        otherDoor = new Door(doorSide, Singleton.Instance.fromDoor.myRoom, Singleton.Instance.currentRoomId);
-                    }
-                }
-                if (otherDoor != null)
-                {
-                    room1.addDoor(otherDoor);
-                }
+        ////else if (Singleton.Instance.currentRoomId == 4)
+        ////{
+        ////    Room room1 = new Room(Singleton.Instance.currentRoomId);
+        ////    Door newDoor = new Door(0, Singleton.Instance.currentRoomId + 1, Singleton.Instance.currentRoomId, true);
+        ////    room1.addDoor(newDoor);
+        ////    Enemy newEnemy1 = new Enemy(1, Constants.ATTACK_TYPE_MELEE, 1, 1, true);
+        ////    room1.addEnemy(newEnemy1);
+        ////    room1.bossRoom = true;
+        ////    Singleton.Instance.addRoom(room1);
+        ////}
+        //else 
+        //{
+        //    int isBossRoom = 0;
+        //    if (Singleton.Instance.currentRoomId > 10)
+        //    {
+        //        isBossRoom = Random.Range(0, 2);
+        //    }
+        //    if (isBossRoom > 0)
+        //    {
+        //        Room room1 = new Room(Singleton.Instance.currentRoomId);
+        //        Door newDoor = new Door(0, Singleton.Instance.currentRoomId + 1, Singleton.Instance.currentRoomId, true);
+        //        room1.addDoor(newDoor);
+        //        Enemy newEnemy1 = new Enemy(100, Constants.ATTACK_TYPE_MELEE, 1, 1, true);
+        //        room1.addEnemy(newEnemy1);
+        //        room1.bossRoom = true;
+        //        Singleton.Instance.addRoom(room1);
+        //    }
+        //    else
+        //    {
+        //        Room room1 = new Room(Singleton.Instance.currentRoomId);
+        //        Door otherDoor = null;
+        //        if (previousRoom != null)
+        //        {
+        //            if (Singleton.Instance.fromDoor != null)
+        //            {
+        //                int doorSide = (Singleton.Instance.fromDoor.wall + 2) % 4;
+        //                otherDoor = new Door(doorSide, Singleton.Instance.fromDoor.roomId, Singleton.Instance.currentRoomId);
+        //            }
+        //        }
+        //        if (otherDoor != null)
+        //        {
+        //            room1.addDoor(otherDoor);
+        //        }
 
-                for (int i = 0; i < 4; i++)
-                {
-                    int isDoor = Random.Range(0, 4);
+        //        for (int i = 0; i < 4; i++)
+        //        {
+        //            int isDoor = Random.Range(0, 4);
 
-                    if (isDoor == 0)
-                    {
-                        bool addDoor = true;
-                        foreach (Door d in room1.doors)
-                        {
-                            if (d.wall == i)
-                            {
-                                addDoor = false;
-                            }
-                        }
-                        if (addDoor)
-                        {
-                            Door newDoor = new Door(i, Singleton.Instance.currentRoomId + 1, Singleton.Instance.currentRoomId);
-                            room1.addDoor(newDoor);
-                        }
-                    }
-                }
-                if (room1.doors.Count == 1)
-                {
-                    int doorSide = (otherDoor.wall + 2) % 4;
-                    Door newDoor = new Door(doorSide, Singleton.Instance.currentRoomId + 1, Singleton.Instance.currentRoomId);
-                    room1.addDoor(newDoor);
-                }
+        //            if (isDoor == 0)
+        //            {
+        //                bool addDoor = true;
+        //                foreach (Door d in room1.doors)
+        //                {
+        //                    if (d.wall == i)
+        //                    {
+        //                        addDoor = false;
+        //                    }
+        //                }
+        //                if (addDoor)
+        //                {
+        //                    Door newDoor = new Door(i, Singleton.Instance.currentRoomId + 1, Singleton.Instance.currentRoomId);
+        //                    room1.addDoor(newDoor);
+        //                }
+        //            }
+        //        }
+        //        if (room1.doors.Count == 1)
+        //        {
+        //            int doorSide = (otherDoor.wall + 2) % 4;
+        //            Door newDoor = new Door(doorSide, Singleton.Instance.currentRoomId + 1, Singleton.Instance.currentRoomId);
+        //            room1.addDoor(newDoor);
+        //        }
 
-                int numEnemies = Random.Range(1, 6);
-                for (int i = 0; i < numEnemies; i++)
-                {
-                    int enemyType = Random.Range(0, 3);
-                    Enemy newEnemy = new Enemy(Singleton.Instance.currentRoomId, enemyType, 1, 1);
-                    room1.addEnemy(newEnemy);
-                }
-                Singleton.Instance.addRoom(room1);
+        //        int numEnemies = Random.Range(1, 6);
+        //        for (int i = 0; i < numEnemies; i++)
+        //        {
+        //            int enemyType = Random.Range(0, 3);
+        //            Enemy newEnemy = new Enemy(Singleton.Instance.currentRoomId, enemyType, 1, 1);
+        //            room1.addEnemy(newEnemy);
+        //        }
+        //        Singleton.Instance.addRoom(room1);
 
 
-                //Singleton.Instance.currentRoomId = room1.RoomId;
-            }
-        }
+        //        //Singleton.Instance.currentRoomId = room1.RoomId;
+        //    }
+        //}
 
         /*****/
 
@@ -332,7 +343,7 @@ public class RoomController : MonoBehaviour
         int ec = 0;
 
         //Create Doors
-        Room newRoom = Singleton.Instance.rooms[Singleton.Instance.currentRoomId];
+        Room newRoom = Singleton.Instance.dungeon.rooms[Singleton.Instance.currentRoomId];
         if (newRoom.bossRoom)
         {
             Singleton.Instance.bossRoom = true;
@@ -341,7 +352,13 @@ public class RoomController : MonoBehaviour
         {
             Singleton.Instance.bossRoom = false;
         }
-        foreach( Door door in newRoom.doors)
+        int entryWall =2;
+        if (Singleton.Instance.fromDoor != null)
+        {
+            entryWall = (Singleton.Instance.fromDoor.wall + 2) % 4;
+        }
+        bool positionedPlayer = false;
+        foreach ( Door door in newRoom.doors)
         {
             if (newRoom.bossRoom)
             {
@@ -358,39 +375,78 @@ public class RoomController : MonoBehaviour
                     continue;
                 }
             }
+            GameObject doorGO = null;
             switch (door.wall)
             {
                 case 0:
-                    GameObject doorGO = Instantiate(DoorHorPrefab);
+                    doorGO = Instantiate(DoorHorPrefab);
                     doorGO.transform.SetParent(transform);
-                    doorGO.transform.localPosition = new Vector3(0, 11.5f, 0);
+                    doorGO.transform.localPosition = new Vector3(0, 11.4f, 0);
                     
                     doorGO.GetComponent<DoorController>().door = door;
+                    
                     break;
                 case 1:
-                    GameObject doorGO2 = Instantiate(DoorVertPrefab);
-                    doorGO2.transform.SetParent(transform);
-                    doorGO2.transform.localPosition = new Vector3(15.5f, 0, 0);
-                    doorGO2.transform.rotation = Quaternion.Euler(transform.eulerAngles + new Vector3(0, 0, 270));
-                    doorGO2.GetComponent<DoorController>().door = door;
+                    doorGO = Instantiate(DoorVertPrefab);
+                    doorGO.transform.SetParent(transform);
+                    doorGO.transform.localPosition = new Vector3(15.4f, 0, 0);
+                    doorGO.transform.rotation = Quaternion.Euler(transform.eulerAngles + new Vector3(0, 0, 270));
+                    doorGO.GetComponent<DoorController>().door = door;
                     break;
                 case 2:
-                    GameObject doorGO3 = Instantiate(DoorHorPrefab);
-                    doorGO3.transform.SetParent(transform);
-                    doorGO3.transform.localPosition = new Vector3(0, -7.5f, 0);
-                    doorGO3.transform.rotation = Quaternion.Euler(transform.eulerAngles + new Vector3(0, 0, 180));
-                    doorGO3.GetComponent<DoorController>().door = door;
+                    doorGO = Instantiate(DoorHorPrefab);
+                    doorGO.transform.SetParent(transform);
+                    doorGO.transform.localPosition = new Vector3(0, -7.4f, 0);
+                    doorGO.transform.rotation = Quaternion.Euler(transform.eulerAngles + new Vector3(0, 0, 180));
+                    doorGO.GetComponent<DoorController>().door = door;
                     break;
                 case 3:
-                    GameObject doorGO4 = Instantiate(DoorVertPrefab);
-                    doorGO4.transform.SetParent(transform);
-                    doorGO4.transform.localPosition = new Vector3(-15.5f, 0, 0);
-                    
-                    doorGO4.GetComponent<DoorController>().door = door;
+                    doorGO = Instantiate(DoorVertPrefab);
+                    doorGO.transform.SetParent(transform);
+                    doorGO.transform.localPosition = new Vector3(-15.4f, 0, 0);
+
+                    doorGO.GetComponent<DoorController>().door = door;
                     break;
             }
             
+            roomDoors.Add(doorGO);
+            if (entryWall == door.wall)
+            {
+                if (doorGO != null)
+                {
+                    switch (door.wall)
+                    {
+                        case 0:
+                            Player.transform.position = new Vector3(0, 13f, 0);
+                            break;
+                        case 1:
+                            Player.transform.position = new Vector3(17f, 0, 0);
+                            break;
+                        case 2:
+                            Player.transform.position = new Vector3(0, -9f, 0);
+                            break;
+                        case 3:
+                            Player.transform.position = new Vector3(-17f, 0, 0);
+                            break;
+                    }
+                    positionedPlayer = true;
+                }
+                else
+                {
+                    if (Singleton.Instance.fromDoor == null)
+                    {
+                        Player.transform.position = new Vector3(0, -9.0f, 0);
+                    }
+                }
+            }
         }
+        if (!positionedPlayer)
+        {
+            Player.transform.position = new Vector3(0, -9.0f, 0);
+        }
+        playerStartPosition = Player.transform.position;
+        Camera.transform.position = new Vector3(Player.transform.position.x, Player.transform.position.y + 3, -10);
+        Camera.GetComponent<CameraController>().offset = Camera.transform.position - Player.transform.position;
         //Create Enemies
         //enemyCount = 0;
         foreach (Enemy enemy in newRoom.enemies)
@@ -441,6 +497,7 @@ public class RoomController : MonoBehaviour
                 }
             }
         }
+        
 
     }
 
@@ -449,13 +506,37 @@ public class RoomController : MonoBehaviour
     {
         startTimer += Time.deltaTime;
         StartCountText.text = "" + (int)(2f-startTimer);
-        if (startTimer > 2f)
+        if (startTimer > 1f)
         {
             Singleton.Instance.startPause = false;
             StartCountText.gameObject.SetActive(false);
         }
+        if (Singleton.Instance.startPause)
+        {
+            //playerDirection = new Vector2(
+            //    0f - Player.transform.position.x ,
+            //    0f - Player.transform.position.y);
+            Vector3 dest = new Vector3(0, 0, 0);
+            Player.transform.position = Vector3.MoveTowards(Player.transform.position, dest, 2.5f * Time.deltaTime);
+            Vector2 direction = new Vector2(
+                0 - Player.transform.position.x,
+                0 - Player.transform.position.y);
+            Player.transform.up = direction;
+        }
+        else
+        {
+            playerCollider.enabled = true;
+        }
     }
 
+    private void FixedUpdate()
+    {
+        //if (Singleton.Instance.startPause)
+        //{
+        //    Vector2 playerMovement = new Vector2(playerDirection.x * 0.5f, playerDirection.y * 0.5f);
+        //    playerBody.velocity = playerMovement;
+        //}
+    }
     private void processSpawnEnemiesEvent(object sender, System.EventArgs e)
     {
         Room room1 = null;

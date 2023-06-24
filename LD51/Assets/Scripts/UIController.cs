@@ -30,17 +30,30 @@ public class UIController : MonoBehaviour
     private Image MeleeInd;
     private Image RangedInd;
     private Image MagicInd;
-    
+
+    private GameObject pauseMenuPanel;
+
+    private Toggle debugToggle;
+
+    public event EventHandler enableDebugModeEvent;
+    public event EventHandler disableDebugModeEvent;
 
     private void Awake()
     {
+        pauseMenuPanel = GameObject.Find("PauseMenuPanel");
         screenMaskImage = GameObject.Find("ScreenMaskImage");
+        debugToggle = GameObject.Find("DebugToggle").GetComponentInChildren<Toggle>();
         gameController.GetComponent<GameController>().darkEvent += processDarkEvent;
         gameController.GetComponent<GameController>().lightEvent += processLightEvent;
+        gameController.GetComponent<GameController>().pauseEvent += processPauseEvent;
+        gameController.GetComponent<GameController>().unpauseEvent += processUnpauseEvent;
+        
+
     }
     // Start is called before the first frame update
     void Start()
     {
+        pauseMenuPanel.SetActive(Singleton.Instance.paused);
         Healthtext = GameObject.Find("HealthText").GetComponent<Text>();
         MeleeDamagetext = GameObject.Find("MeleeText").GetComponent<Text>();
         RangeDamagetext = GameObject.Find("RangedText").GetComponent<Text>();
@@ -56,6 +69,8 @@ public class UIController : MonoBehaviour
         MagicInd = GameObject.Find("MagicInd").GetComponent<Image>();
 
         BossHealthtext = GameObject.Find("BossHealthText").GetComponent<Text>();
+
+        
         //screenMaskImage = GameObject.Find("ScreenMaskImage");
 
         //gameController.GetComponent<GameController>().darkEvent += processDarkEvent;
@@ -223,6 +238,18 @@ public class UIController : MonoBehaviour
     {
         StartCoroutine(FadeScreenMaskImage(false, 5));
     }
+    private void processPauseEvent(object sender, EventArgs e)
+    {
+        pauseMenuPanel.SetActive(true);
+        if (pauseMenuPanel.activeInHierarchy)
+        {
+            debugToggle.isOn = Singleton.Instance.debugMode;
+        }
+    }
+    private void processUnpauseEvent(object sender, EventArgs e)
+    {
+        pauseMenuPanel.SetActive(false);
+    }
 
     public IEnumerator FadeScreenMaskImage(bool fadeToBlack, int fadeSpeed)
     {
@@ -251,5 +278,24 @@ public class UIController : MonoBehaviour
                 yield return null;
             }
         }
+    }
+
+    public void toggleDebug()
+    {
+        Singleton.Instance.debugMode = !Singleton.Instance.debugMode;
+        if (Singleton.Instance.debugMode)
+        {
+            enableDebugModeEvent?.Invoke(this, EventArgs.Empty);
+        }
+        else
+        {
+            disableDebugModeEvent?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        gameController.GetComponent<GameController>().pauseEvent -= processPauseEvent;
+        gameController.GetComponent<GameController>().unpauseEvent -= processUnpauseEvent;
     }
 }

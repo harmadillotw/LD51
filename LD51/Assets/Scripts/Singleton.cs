@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -51,6 +52,12 @@ public class Singleton : MonoBehaviour
 
     public bool reverseControls = false;
     public bool attackLocked = false;
+
+    public bool debugMode = false;
+
+    public Dungeon dungeon;
+
+    
 
     private void Awake()
     {

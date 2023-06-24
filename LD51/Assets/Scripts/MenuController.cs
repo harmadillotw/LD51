@@ -65,6 +65,10 @@ public class MenuController : MonoBehaviour
         SceneManager.LoadScene("MainGameScene");
     }
 
+    public void GoDungeonCreator()
+    {
+        SceneManager.LoadScene("CreateDungeonScene");
+    }
     public void GoLoadGame()
     {
         SceneManager.LoadScene("MainGameScene");

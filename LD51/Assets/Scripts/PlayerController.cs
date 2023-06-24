@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 
 public class PlayerController : MonoBehaviour
@@ -27,6 +28,11 @@ public class PlayerController : MonoBehaviour
     public AudioClip magicClip;
     public AudioClip damageClip;
 
+
+    private Text debugText;
+    //Pause values
+    private bool paused = false;
+    private GameController gameController;
     //private GameObject attackPosition;
 
     private Rigidbody2D body;
@@ -37,20 +43,30 @@ public class PlayerController : MonoBehaviour
     private Vector3 mouseposition;
     private Vector2 direction;
 
-    private float rangeAttackSpeed = 5f;
+    private float rangeAttackSpeed = 3.5f;
+    
 
     private List<Attack> attacks;
 
-    
 
 
 
+
+
+    private void Awake()
+    {
+        paused = false;
+        gameController = GameObject.FindObjectOfType<GameController>();
+        gameController.pauseEvent += processPauseEvent;
+        gameController.unpauseEvent += processUnpauseEvent;
+
+    }
 
     // Start is called before the first frame update
     void Start()
     {
-
         body = GetComponent<Rigidbody2D>();
+        debugText = GetComponentInChildren<Text>();
         //attackPosition = GameObject.Find("Attackposition");
         attacks = new List<Attack>();
         meleeDamage = Singleton.Instance.playerMeleeDamage; ;
@@ -61,74 +77,82 @@ public class PlayerController : MonoBehaviour
 
         attackType = Singleton.Instance.playerAttackType;
         showWeapon(attackType);
+        debugText.text = "" + health;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Tab))
+        
+        if (!paused)
         {
-            Singleton.Instance.paused = !Singleton.Instance.paused;
-        }
-        if (!Singleton.Instance.isPaused())
-        {
-            float inputX = Input.GetAxis("Horizontal");
-            float inputY = Input.GetAxis("Vertical");
-            horizontal = Input.GetAxis("Horizontal");
-            vertical = Input.GetAxis("Vertical");
-
-            if (Singleton.Instance.reverseControls)
+            //if (Input.GetKeyDown(KeyCode.Tab))
+            //{
+            //    Singleton.Instance.paused = !Singleton.Instance.paused;
+            //
+            //}
+            if (!Singleton.Instance.isPaused())
             {
-                horizontal *= -1;
-                vertical *= -1;
-            }
+                float inputX = Input.GetAxis("Horizontal");
+                float inputY = Input.GetAxis("Vertical");
+                horizontal = Input.GetAxis("Horizontal");
+                vertical = Input.GetAxis("Vertical");
 
-            // Change Attack
-            if (Input.GetMouseButtonDown(1))
-            {
-                if (!Singleton.Instance.attackLocked)
+                if (Singleton.Instance.reverseControls)
                 {
-                    attackType++;
-                    if (attackType > Constants.MAX_ATTACKS)
+                    horizontal *= -1;
+                    vertical *= -1;
+                }
+
+                // Change Attack
+                if (Input.GetMouseButtonDown(1))
+                {
+                    if (!Singleton.Instance.attackLocked)
                     {
-                        attackType = 0;
+                        attackType++;
+                        if (attackType > Constants.MAX_ATTACKS)
+                        {
+                            attackType = 0;
+                        }
+                        showWeapon(attackType);
                     }
-                    showWeapon(attackType);
                 }
-            }
 
-            // Attack
-            if ((Input.GetKeyDown(KeyCode.Space)) || (Input.GetMouseButtonDown(0)))
-            {
-                switch (attackType)
+                // Attack
+                if (Input.GetMouseButtonDown(0))
                 {
-                    case Constants.ATTACK_TYPE_MELEE:
-                        meleeAttack();
-                        break;
-                    case Constants.ATTACK_TYPE_PROJECTILE:
-                        rangedAttack();
-                        break;
-                    case Constants.ATTACK_TYPE_MAGIC:
-                        magicAttack();
-                        break;
+                    switch (attackType)
+                    {
+                        case Constants.ATTACK_TYPE_MELEE:
+                            meleeAttack();
+                            break;
+                        case Constants.ATTACK_TYPE_PROJECTILE:
+                            rangedAttack();
+                            break;
+                        case Constants.ATTACK_TYPE_MAGIC:
+                            magicAttack();
+                            break;
+                    }
+
                 }
 
+
+                mouseposition = Input.mousePosition;
+                mouseposition = Camera.main.ScreenToWorldPoint(mouseposition);
+                direction = new Vector2(
+                        mouseposition.x - transform.position.x,
+                        mouseposition.y - transform.position.y);
+                transform.up = direction;
+
+                checkHealth();
+                debugText.text = "" + health;
             }
-
-
-            mouseposition = Input.mousePosition;
-            mouseposition = Camera.main.ScreenToWorldPoint(mouseposition);
-            direction = new Vector2(
-                    mouseposition.x - transform.position.x,
-                    mouseposition.y - transform.position.y);
-            transform.up = direction;
-
-            checkHealth();
         }
     }
     void FixedUpdate()
     {
-        if (!Singleton.Instance.isPaused())
+
+        if ((!Singleton.Instance.isPaused()) && (!paused))
         {
             if (horizontal != 0 && vertical != 0)
             {
@@ -152,6 +176,23 @@ public class PlayerController : MonoBehaviour
         }
 
     }
+    private void processPauseEvent(object sender, System.EventArgs e)
+    {
+        paused = true;
+        //savedVelocity = body.velocity;
+        //savedAngularVelocity = body.angularVelocity;
+        //Vector2 movement = new Vector2(0, 0);
+        //body.velocity = movement;
+        //body.angularVelocity = 0f;
+    }
+
+    private void processUnpauseEvent(object sender, System.EventArgs e)
+    {
+        paused = false;
+        //body.velocity = savedVelocity;
+        //body.angularVelocity = savedAngularVelocity;
+    }
+
 
     void showWeapon(int attacktype)
     {
@@ -180,6 +221,7 @@ public class PlayerController : MonoBehaviour
         playAudio(meleeClip, playerAudioSource, false);
         transform.Find("sword2").gameObject.SetActive(false);
         GameObject r = Instantiate(meleeAttackPrefab);
+        r.GetComponentInChildren<MeleeController>().setPlayer();
         r.transform.SetParent(transform);
         r.transform.localPosition = new Vector3(0, 1, 0);
         r.transform.up = direction;
@@ -206,7 +248,7 @@ public class PlayerController : MonoBehaviour
         r.transform.SetParent(transform);
         r.transform.localPosition = new Vector3(0, 1, 0);
         r.transform.up = direction;
-        Destroy(r, 0.5f);
+        //Destroy(r, 0.5f);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -246,7 +288,10 @@ public class PlayerController : MonoBehaviour
             //enterDoor(collision.gameObject.GetComponent<>
             // );
             //collision.gameObject.GetComponent<DoorController>().door.destinationRoom;
-            enterDoor(collision.gameObject.GetComponent<DoorController>().door);
+            if (!Singleton.Instance.startPause)
+            {
+                enterDoor(collision.gameObject.GetComponent<DoorController>().door);
+            }
         }
         else if (collision.tag == "DropMelee")
         {
@@ -305,7 +350,7 @@ public class PlayerController : MonoBehaviour
             Singleton.Instance.playerAttackType = attackType;
 
             Singleton.Instance.fromRoomId = Singleton.Instance.currentRoomId;
-            Singleton.Instance.currentRoomId = door.destinationRoom;
+            Singleton.Instance.currentRoomId = door.destinationRoomId;
             Singleton.Instance.fromDoor = door;
         }
         // save enemies
@@ -329,6 +374,12 @@ public class PlayerController : MonoBehaviour
         }
 
         audioSource.PlayOneShot(clip, vol);
+    }
+
+    private void OnDestroy()
+    {
+        gameController.pauseEvent -= processPauseEvent;
+        gameController.unpauseEvent -= processUnpauseEvent;
     }
 
 }

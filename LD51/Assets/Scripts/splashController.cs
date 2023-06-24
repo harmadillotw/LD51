@@ -9,7 +9,7 @@ public class splashController : MonoBehaviour
     private float splashTimer;
 
     // How long we see the splash screen for. Make longer the first time a user sees it.
-    private float splashPeriod = 3f;
+    private float splashPeriod = 0.5f;
     // Start is called before the first frame update
     void Start()
     {
